@@ -49,7 +49,16 @@
             border: 2px solid rgba(255,0,0,0.5); 
             transform: scaleX(-1); opacity: 0.6; border-radius: 8px;
         }
-        
+        #snow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* không chặn click */
+            z-index: 9999;
+        }
+
         #error-log { display: none; position: absolute; top: 0; left: 0; color: red; background: rgba(0,0,0,0.8); z-index: 999; padding: 10px; }
     </style>
 </head>
@@ -63,8 +72,9 @@
         <button id="btnStart" onclick="startSystem()">BẮT ĐẦU</button>
     </div>
 
+    <canvas id="snow"></canvas>
     <div id="canvas-container"></div>
-    <video class="input_video" style="display:none"></video>
+    <video class="input_video" style="display:none" playsinline ></video>
     <canvas id="camera-preview"></canvas>
 
     <script>
@@ -154,7 +164,6 @@
         // ==========================================
         function init3D() {
             const container = document.getElementById('canvas-container');
-            scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x000000, 0.002);
 
             camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -263,7 +272,7 @@
             ctx.font = 'bold italic 90px "Times New Roman"';
             ctx.fillStyle = '#FFD700'; ctx.textAlign = 'center';
             ctx.shadowColor = "#FF0000"; ctx.shadowBlur = 40; 
-            ctx.fillText("MERRY CHRISTMAS", 512, 130);
+            // ctx.fillText("MERRY CHRISTMAS", 512, 130);
             
             const tex = new THREE.CanvasTexture(canvas);
             const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending });
@@ -398,6 +407,7 @@
         function startSystem() {
             document.getElementById('btnStart').style.display = 'none';
             bgMusic.play().catch(e => console.log(e));
+            scene = new THREE.Scene()
             init3D();
 
             const video = document.getElementsByClassName('input_video')[0];
@@ -449,6 +459,76 @@
             });
             cameraUtils.start();
         }
+
+        //snow
+        const canvas = document.getElementById('snow');
+        const ctx = canvas.getContext('2d');
+        let w, h;
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        const snowflakes = [];
+        const COUNT = 350;
+
+        for (let i = 0; i < COUNT; i++) {
+        snowflakes.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            r: Math.random() * 3 + 1,
+            speed: Math.random() * 1 + 0.5,
+            drift: Math.random() * 0.5 - 0.25
+        });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, w, h);
+
+            const treeLight = {
+                x: w / 2,
+                y: h * 0.55,
+                radius: h * 0.35
+            };
+
+            snowflakes.forEach(flake => {
+                // fade theo độ cao
+                const alpha = 1 - flake.y / h;
+
+                // ánh sáng cây thông
+                const dx = flake.x - treeLight.x;
+                const dy = flake.y - treeLight.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                let lightBoost = 0;
+                if (dist < treeLight.radius) {
+                lightBoost = (1 - dist / treeLight.radius) * 0.6;
+                }
+
+                const depth = flake.r / 4;
+                const finalAlpha = alpha * depth * (0.4 + lightBoost);
+
+                ctx.fillStyle = `rgba(255,240,220,${finalAlpha})`;
+                ctx.beginPath();
+                ctx.arc(flake.x, flake.y, flake.r, 0, Math.PI * 2);
+                ctx.fill();
+
+                // motion
+                flake.y += flake.speed;
+                flake.x += flake.drift;
+
+                if (flake.y > h) {
+                flake.y = -10;
+                flake.x = Math.random() * w;
+                }
+            });
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
         function logError(e) { document.getElementById('error-log').style.display='block'; document.getElementById('error-log').innerText+=e+"\n"; }
     </script>
 </body>
