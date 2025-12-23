@@ -16,7 +16,8 @@
         
         #ui-layer {
             position: absolute; bottom: 30px; width: 100%;
-            text-align: center; pointer-events: none; z-index: 100;
+            text-align: center; pointer-events: auto; z-index: 100;
+            cursor: pointer;
         }
         
         .badge {
@@ -67,7 +68,7 @@
     <div id="ui-layer">
         <div id="status" class="badge">🎄 Giang Sinh An Lanh 🎄</div>
         <div class="guide">
-            🖐 <b>Xòe:</b> Bung Quà & Đèn &nbsp;|&nbsp; 👌 <b>Pinch:</b> Xem ảnh &nbsp;|&nbsp; ✊ <b>Nắm:</b> Thu cây
+            🖐 <b onclick="setState('EXPLODE')">Xòe:</b> <span onclick="setState('EXPLODE')">Bung Quà & Đèn</span> &nbsp;|&nbsp; 👌 <b onclick="setState('PHOTO')">Pinch:</b> <span onclick="setState('PHOTO')">Xem ảnh</span> &nbsp;|&nbsp; ✊ <b onclick="setState('TREE')">Nắm:</b> <span onclick="setState('TREE')">Thu cây</span>
         </div>
         <button id="btnStart" onclick="startSystem()">BẮT ĐẦU</button>
     </div>
@@ -158,6 +159,18 @@
         let handX = 0.5;
         let photoZoom = 1.0;
 
+        function setState(newState) {
+            // nếu đang PHOTO mà click PHOTO lần nữa → thu về
+            if (state === 'PHOTO' && newState === 'PHOTO') {
+                state = 'EXPLODE';
+                return;
+            }
+            if (state == 'TREE' && newState == 'PHOTO') {
+                state = 'EXPLODE';
+                return;
+            }
+            state = newState;
+        }
 
         // ==========================================
         // 3. Vandiep
